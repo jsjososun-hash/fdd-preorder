@@ -1,0 +1,816 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>肥嘟嘟预订单</title>
+  <style>
+    :root {
+      --ink: #353631;
+      --muted: #76796f;
+      --paper: rgba(255, 255, 255, .68);
+      --paper-strong: rgba(255, 255, 255, .86);
+      --line: rgba(99, 104, 91, .18);
+      --sage: #8fa796;
+      --sage-dark: #607b69;
+      --clay: #c9a99a;
+      --rose: #d9b8b2;
+      --mist: #dce3df;
+      --sand: #ded4c5;
+      --lavender: #c6c1d8;
+      --blue: #aab9c8;
+      --danger: #a65f59;
+      --shadow: 0 22px 60px rgba(69, 72, 63, .16);
+      --radius: 18px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(201, 169, 154, .42), transparent 32%),
+        radial-gradient(circle at 88% 12%, rgba(198, 193, 216, .45), transparent 34%),
+        radial-gradient(circle at 70% 82%, rgba(143, 167, 150, .40), transparent 38%),
+        linear-gradient(135deg, #eee8df 0%, #e4ebe6 42%, #e9e5ec 100%);
+      background-attachment: fixed;
+    }
+
+    button, input, select, textarea { font: inherit; }
+
+    button {
+      border: 0;
+      min-height: 42px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--sage-dark), #7d927f);
+      box-shadow: 0 10px 22px rgba(96, 123, 105, .20);
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+      white-space: nowrap;
+    }
+
+    button:hover { transform: translateY(-1px); box-shadow: 0 14px 26px rgba(96, 123, 105, .24); }
+    button:active { transform: translateY(0); }
+    button.secondary { background: rgba(255, 255, 255, .72); color: var(--sage-dark); border: 1px solid var(--line); box-shadow: none; }
+    button.soft { background: rgba(143, 167, 150, .20); color: var(--sage-dark); box-shadow: none; }
+    button.danger { background: rgba(166, 95, 89, .14); color: var(--danger); box-shadow: none; }
+
+    input, select, textarea {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, .70);
+      padding: 10px 12px;
+      outline: none;
+      transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+
+    textarea { min-height: 78px; resize: vertical; }
+    input:focus, select:focus, textarea:focus {
+      background: rgba(255, 255, 255, .92);
+      border-color: rgba(96, 123, 105, .48);
+      box-shadow: 0 0 0 4px rgba(143, 167, 150, .18);
+    }
+
+    .shell { max-width: 1320px; margin: 0 auto; padding: 24px; }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr minmax(280px, 430px);
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+
+    .glass {
+      background: var(--paper);
+      border: 1px solid rgba(255, 255, 255, .62);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(22px) saturate(1.15);
+      -webkit-backdrop-filter: blur(22px) saturate(1.15);
+      border-radius: var(--radius);
+    }
+
+    .hero-title { padding: 24px; }
+    h1 { margin: 0; font-size: clamp(28px, 4vw, 46px); line-height: 1.05; letter-spacing: 0; }
+    .sub { color: var(--muted); margin: 10px 0 0; font-size: 15px; }
+
+    .operator {
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+      align-content: center;
+    }
+
+    .operator label, .field label {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 7px;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .tab {
+      background: rgba(255, 255, 255, .56);
+      color: var(--ink);
+      border: 1px solid rgba(255, 255, 255, .70);
+      box-shadow: none;
+    }
+
+    .tab.active {
+      background: rgba(96, 123, 105, .88);
+      color: #fff;
+      border-color: transparent;
+    }
+
+    .view { display: none; }
+    .view.active { display: block; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.02fr) minmax(360px, .98fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel { overflow: hidden; }
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, .26);
+    }
+
+    h2 { margin: 0; font-size: 18px; }
+    h3 { margin: 20px 0 10px; font-size: 16px; }
+    .panel-body { padding: 18px; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .form-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .field.full { grid-column: 1 / -1; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; min-height: 42px; }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 11px;
+      background: rgba(255,255,255,.58);
+      font-size: 14px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .chip input { width: auto; min-height: auto; margin: 0; accent-color: var(--sage-dark); }
+    .chip:has(input:checked) { background: rgba(143, 167, 150, .22); color: var(--sage-dark); border-color: rgba(96, 123, 105, .36); font-weight: 700; }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    .status { min-height: 20px; margin-top: 10px; color: var(--muted); font-size: 13px; }
+
+    .list { display: grid; gap: 10px; }
+    .item {
+      background: rgba(255,255,255,.58);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .item strong { display: block; margin-bottom: 5px; }
+    .meta { color: var(--muted); font-size: 13px; line-height: 1.55; }
+
+    .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+    .card { padding: 15px; }
+    .card b { display: block; font-size: 27px; margin-top: 5px; }
+
+    .chart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
+    .chart { padding: 16px; }
+    .bars { display: grid; gap: 10px; margin-top: 12px; }
+    .bar-row { display: grid; grid-template-columns: 92px 1fr 58px; gap: 10px; align-items: center; font-size: 13px; }
+    .bar-track { height: 12px; background: rgba(255,255,255,.62); border-radius: 99px; overflow: hidden; border: 1px solid var(--line); }
+    .bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--sage), var(--blue)); }
+    .buyer-cloud { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .buyer-pill { border-radius: 999px; padding: 8px 11px; background: rgba(255,255,255,.62); border: 1px solid var(--line); font-size: 13px; }
+
+    .table-wrap { width: 100%; overflow: auto; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.54); }
+    table { width: 100%; min-width: 760px; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 11px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { background: rgba(143, 167, 150, .22); color: #425749; position: sticky; top: 0; z-index: 1; }
+    tr:last-child td { border-bottom: 0; }
+
+    .product-row input { min-width: 160px; }
+    .product-row td:nth-child(4) input { min-width: 320px; }
+    .empty { padding: 18px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: 14px; background: rgba(255,255,255,.42); }
+    .notice { color: #755d3d; background: rgba(222, 212, 197, .42); border: 1px solid rgba(117, 93, 61, .18); padding: 12px; border-radius: 14px; margin-bottom: 14px; }
+
+    @media (max-width: 940px) {
+      .shell { padding: 14px; }
+      .hero, .layout, .chart-grid { grid-template-columns: 1fr; }
+      .tabs { grid-template-columns: repeat(2, 1fr); }
+      .form-grid, .form-grid.three, .cards { grid-template-columns: 1fr; }
+      .bar-row { grid-template-columns: 76px 1fr 46px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div class="hero-title glass">
+        <h1>肥嘟嘟预订单</h1>
+        <p class="sub">统一品名、处理方式和单位，录入后自动微信通知，每天按店家与部位统计。</p>
+      </div>
+      <div class="operator glass">
+        <div class="field">
+          <label for="currentEmployee">当前录入人</label>
+          <select id="currentEmployee"></select>
+        </div>
+        <div class="meta">推送 token 已内置，不会显示在页面上。</div>
+      </div>
+    </section>
+
+    <nav class="tabs">
+      <button class="tab active" data-view="orderView">录入订单</button>
+      <button class="tab" data-view="statsView">订单统计</button>
+      <button class="tab" data-view="filterView">订单筛选</button>
+      <button class="tab" data-view="productView">产品编辑</button>
+    </nav>
+
+    <section id="orderView" class="view active">
+      <div class="layout">
+        <section class="panel glass">
+          <div class="panel-head">
+            <h2>新增预订单</h2>
+            <button id="clearDraftBtn" class="secondary">重新填写</button>
+          </div>
+          <div class="panel-body">
+            <div class="form-grid">
+              <div class="field">
+                <label for="orderDate">预订日期</label>
+                <input id="orderDate" type="date">
+              </div>
+              <div class="field">
+                <label for="customer">买家/店家</label>
+                <input id="customer" list="customerList" placeholder="例如 山泽居、明珠">
+                <datalist id="customerList"></datalist>
+              </div>
+              <div class="field">
+                <label for="pickupTime">取货时间</label>
+                <input id="pickupTime" placeholder="例如 10点取、明早取">
+              </div>
+              <div class="field">
+                <label for="category">产品类目</label>
+                <select id="category"></select>
+              </div>
+              <div class="field">
+                <label for="product">产品名称</label>
+                <select id="product"></select>
+              </div>
+              <div class="field">
+                <label for="fatRatio">肥瘦/特殊状态</label>
+                <select id="fatRatio"></select>
+              </div>
+              <div class="field full">
+                <label>处理方式</label>
+                <div id="optionChips" class="chips"></div>
+              </div>
+              <div class="field">
+                <label for="quantity">数量</label>
+                <input id="quantity" inputmode="decimal" placeholder="例如 3、5、全部">
+              </div>
+              <div class="field">
+                <label for="unit">单位</label>
+                <select id="unit"></select>
+              </div>
+              <div class="field full">
+                <label for="itemNote">这项产品备注</label>
+                <input id="itemNote" placeholder="例如 无切口、不要大里脊、全收">
+              </div>
+              <div class="field full">
+                <label for="orderNote">整单备注</label>
+                <textarea id="orderNote" placeholder="例如 送货、分开装、客户特殊要求"></textarea>
+              </div>
+            </div>
+            <div class="actions">
+              <button id="addItemBtn">添加到订单</button>
+              <button id="savePushBtn">完成订单并微信通知</button>
+              <button id="saveOnlyBtn" class="soft">先存起来不通知</button>
+            </div>
+            <div id="orderStatus" class="status"></div>
+          </div>
+        </section>
+
+        <aside class="panel glass">
+          <div class="panel-head">
+            <h2>当前订单内容</h2>
+            <button id="pushDraftBtn" class="secondary">只通知当前内容</button>
+          </div>
+          <div class="panel-body">
+            <div id="draftItems" class="list"></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="statsView" class="view">
+      <section class="panel glass">
+        <div class="panel-head">
+          <h2>订单统计</h2>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <input id="statsDate" type="date" style="width:170px;">
+            <button id="pushStatsBtn">推送今日统计</button>
+            <button id="exportCsvBtn" class="secondary">导出表格</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="cards">
+            <div class="card glass"><span class="meta">订单数</span><b id="countOrders">0</b></div>
+            <div class="card glass"><span class="meta">买家数</span><b id="countCustomers">0</b></div>
+            <div class="card glass"><span class="meta">产品明细</span><b id="countItems">0</b></div>
+            <div class="card glass"><span class="meta">录入员工</span><b id="countEmployees">0</b></div>
+          </div>
+
+          <div class="chart-grid">
+            <div class="chart glass">
+              <h3>产品类目数量</h3>
+              <div id="categoryChart" class="bars"></div>
+            </div>
+            <div class="chart glass">
+              <h3>产品名称数量</h3>
+              <div id="productChart" class="bars"></div>
+            </div>
+            <div class="chart glass">
+              <h3>买家来源</h3>
+              <div id="buyerCloud" class="buyer-cloud"></div>
+            </div>
+            <div class="chart glass">
+              <h3>员工录入</h3>
+              <div id="employeeChart" class="bars"></div>
+            </div>
+          </div>
+
+          <h3>按买家查看</h3>
+          <div id="customerTable" class="table-wrap"></div>
+          <h3>全部明细</h3>
+          <div id="detailTable" class="table-wrap"></div>
+        </div>
+      </section>
+    </section>
+
+    <section id="filterView" class="view">
+      <section class="panel glass">
+        <div class="panel-head">
+          <h2>订单筛选</h2>
+          <button id="resetFilterBtn" class="secondary">清除筛选</button>
+        </div>
+        <div class="panel-body">
+          <div class="form-grid three">
+            <div class="field">
+              <label for="filterDate">日期</label>
+              <input id="filterDate" type="date">
+            </div>
+            <div class="field">
+              <label for="filterEmployee">录入人</label>
+              <select id="filterEmployee"></select>
+            </div>
+            <div class="field">
+              <label for="filterKeyword">关键词</label>
+              <input id="filterKeyword" placeholder="产品、买家、处理方式、备注">
+            </div>
+          </div>
+          <div id="filterResults" class="list" style="margin-top:16px;"></div>
+        </div>
+      </section>
+    </section>
+
+    <section id="productView" class="view">
+      <section class="panel glass">
+        <div class="panel-head">
+          <h2>产品编辑</h2>
+          <button id="resetProductsBtn" class="danger">恢复默认产品</button>
+        </div>
+        <div class="panel-body">
+          <div class="notice">单位、处理方式都可以直接在表格里改，多个内容用中文逗号或英文逗号分隔。</div>
+          <div class="form-grid">
+            <div class="field"><label for="newCategory">类目</label><input id="newCategory" placeholder="例如 肉类"></div>
+            <div class="field"><label for="newProduct">产品</label><input id="newProduct" placeholder="例如 腿肉"></div>
+            <div class="field"><label for="newUnits">单位</label><input id="newUnits" placeholder="斤,个,全要"></div>
+            <div class="field"><label for="newOptions">处理方式</label><input id="newOptions" placeholder="前腿,后腿,肉沫,去皮"></div>
+          </div>
+          <div class="actions"><button id="addProductBtn">新增产品</button><button id="saveProductsBtn" class="soft">保存产品修改</button></div>
+          <div id="productTable" class="table-wrap" style="margin-top:16px;"></div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const PUSHPLUS_TOKEN = "7cdf8dc03eaa4f43bc68f7fc04724733";
+    const STORE_KEY = "fdd-preorder-page-v2";
+    const EMPLOYEES = ["郑小颖", "周冰洁", "林怡冉", "朱诗沁"];
+    const fatRatios = ["不选", "全肥", "全瘦", "9肥1瘦", "8肥2瘦", "7肥3瘦", "6肥4瘦", "5肥5瘦", "带肥", "带肥带皮", "无切口", "全要/全收"];
+    const splitList = (text) => String(text || "").split(/[，,]/).map(x => x.trim()).filter(Boolean);
+    const defaultProducts = [
+      ["肉类","腿肉","斤,整腿,全要","前腿,后腿,去皮,带皮,肉沫,手切片,机器切片,切丝,切块"],
+      ["肉类","五花肉","斤,片,整条,整块,全要","精品五花,下五花,烧皮,去皮,带皮,切片,切块"],
+      ["肉类","瘦肉","斤,整块,全要","全瘦,带肥,带肥带皮,手切片,机器切片,切丝,肉沫,无切口,有切口"],
+      ["肉类","大里脊","斤,条,整块,全要","肉丝,肉片,肉块,手切,机器切,带肥带皮,不要"],
+      ["肉类","梅花肉","斤,整块,全要","全瘦,带肥,无切口,切片,切块,肉沫"],
+      ["肉类","里脊肉","斤,条,整条,全要","切片,切丝,切块"],
+      ["肉类","罗汉肉","斤,块,全要","整块,切块"],
+      ["肉类","猪颈肉","斤,块,全要","无切口,整块,切块"],
+      ["骨类","排骨","斤,根,片,整扇,全要","剁块,不剁,整根,带五花"],
+      ["骨类","筒骨","斤,根,全要","剁块,不剁"],
+      ["骨类","扇骨","斤,个,全要","剁块,不剁"],
+      ["骨类","龙骨","斤,根,全要","剁块,不剁"],
+      ["骨类","八字骨","斤,块,全要","剁块,不剁"],
+      ["骨类","尾骨","斤,块,全要","剁块,不剁"],
+      ["骨类","梅花骨","斤,块,全要","剁块,不剁"],
+      ["猪脚类","猪脚","斤,个,只,全要","前脚,后脚,七寸,剁块,不剁,整只"],
+      ["内脏类","猪肝","斤,块,全要","切片,不切"],
+      ["内脏类","猪心","斤,个,全要","切片,不切"],
+      ["内脏类","猪腰","斤,个,全要","切片,不切,去腰骚"],
+      ["内脏类","猪肚","斤,个,全要","清洗,不切,切条"],
+      ["内脏类","小肠","斤,副,全要","清洗,不切,切段"],
+      ["内脏类","大肠","斤,副,全要","清洗,不切,切段"],
+      ["内脏类","猪脑","个,副,全要","整副"],
+      ["头尾类","猪舌头","斤,个,全要","不切,切片"],
+      ["头尾类","猪尾巴","斤,条,全要","剁块,不剁"],
+      ["头尾类","猪头皮/头骨","斤,个,对,全要","头皮,头骨,剁块,不剁"],
+      ["头尾类","猪头","斤,个,全要","猪头脸,剁块,不剁"],
+      ["头尾类","猪耳朵","斤,个,全要","不切,切丝"],
+      ["油脂类","猪大油","斤,全要","切块,不切"],
+      ["油脂类","板油","斤,全要","切块,不切"],
+      ["油脂类","肥肉","斤,全要","全肥,切块,绞碎"],
+      ["其他","猪血","块,盒,全要",""],
+      ["其他","猪尺","全部,全要",""]
+    ].map(([category, name, units, options]) => ({ category, name, units: splitList(units), options: splitList(options) }));
+
+    const $ = (id) => document.getElementById(id);
+    const esc = (v) => String(v ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+    const today = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    const uuid = () => crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+
+    let state = load();
+    let draft = [];
+
+    function load() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORE_KEY));
+        if (saved) return saved;
+      } catch {}
+      return { products: defaultProducts, orders: [], currentEmployee: EMPLOYEES[0] };
+    }
+
+    function save() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+    function unique(values) { return [...new Set(values.filter(Boolean))]; }
+
+    function init() {
+      $("orderDate").value = $("orderDate").value || today();
+      $("statsDate").value = $("statsDate").value || today();
+      $("currentEmployee").innerHTML = EMPLOYEES.map(e => `<option>${esc(e)}</option>`).join("");
+      $("currentEmployee").value = state.currentEmployee || EMPLOYEES[0];
+      $("filterEmployee").innerHTML = `<option value="">全部</option>${EMPLOYEES.map(e => `<option>${esc(e)}</option>`).join("")}`;
+      $("customerList").innerHTML = unique(state.orders.map(o => o.customer)).map(c => `<option value="${esc(c)}"></option>`).join("");
+      renderCategorySelect();
+      renderDraft();
+      renderStats();
+      renderFilter();
+      renderProductTable();
+    }
+
+    function renderCategorySelect() {
+      const categories = unique(state.products.map(p => p.category));
+      $("category").innerHTML = categories.map(c => `<option>${esc(c)}</option>`).join("");
+      renderProductSelect();
+    }
+
+    function renderProductSelect() {
+      const current = $("category").value;
+      const products = state.products.filter(p => p.category === current);
+      $("product").innerHTML = products.map(p => `<option>${esc(p.name)}</option>`).join("");
+      renderProductOptions();
+    }
+
+    function currentProduct() {
+      return state.products.find(p => p.category === $("category").value && p.name === $("product").value) || state.products[0];
+    }
+
+    function renderProductOptions() {
+      const p = currentProduct();
+      $("optionChips").innerHTML = p.options.length
+        ? p.options.map(o => `<label class="chip"><input type="checkbox" value="${esc(o)}"> ${esc(o)}</label>`).join("")
+        : `<span class="meta">这个产品暂无处理方式</span>`;
+      $("unit").innerHTML = p.units.map(u => `<option>${esc(u)}</option>`).join("");
+      $("fatRatio").innerHTML = fatRatios.map(f => `<option>${esc(f)}</option>`).join("");
+    }
+
+    function checkedOptions() {
+      return [...$("optionChips").querySelectorAll("input:checked")].map(i => i.value);
+    }
+
+    function qtyText(item) {
+      if (["全要", "全部"].includes(item.unit)) return item.unit;
+      if (!item.qty && String(item.unit).includes("全")) return item.unit;
+      return `${item.qty || ""}${item.unit || ""}`;
+    }
+
+    function itemText(item) {
+      const parts = [item.product];
+      if (item.options.length) parts.push(item.options.join("、"));
+      if (item.fat && item.fat !== "不选") parts.push(item.fat);
+      const q = qtyText(item);
+      if (q.trim()) parts.push(q);
+      if (item.note) parts.push(item.note);
+      return parts.join("｜");
+    }
+
+    function itemDetail(item) {
+      return [item.options.join("、"), item.fat !== "不选" ? item.fat : "", item.note].filter(Boolean).join("、");
+    }
+
+    function addItem() {
+      const p = currentProduct();
+      const unit = $("unit").value;
+      const qty = $("quantity").value.trim();
+      if (!qty && !["全要", "全部"].includes(unit)) return status("orderStatus", "请填写数量，或选择全要/全部。");
+      draft.push({ category: p.category, product: p.name, options: checkedOptions(), fat: $("fatRatio").value, qty, unit, note: $("itemNote").value.trim() });
+      $("quantity").value = "";
+      $("itemNote").value = "";
+      renderDraft();
+      status("orderStatus", "已添加到当前订单。");
+    }
+
+    function renderDraft() {
+      $("draftItems").innerHTML = draft.length ? draft.map((item, i) => `
+        <div class="item">
+          <strong>${esc(itemText(item))}</strong>
+          <div class="meta">${esc(item.category)} / ${esc(item.product)}</div>
+          <div class="actions"><button class="danger" onclick="removeDraft(${i})">删除这一项</button></div>
+        </div>
+      `).join("") : `<div class="empty">还没有添加产品</div>`;
+    }
+
+    window.removeDraft = (i) => { draft.splice(i, 1); renderDraft(); };
+
+    function makeOrder() {
+      const customer = $("customer").value.trim();
+      if (!customer) throw new Error("请填写买家/店家。");
+      if (!draft.length) throw new Error("请先添加产品。");
+      return {
+        id: uuid(),
+        date: $("orderDate").value || today(),
+        employee: state.currentEmployee || EMPLOYEES[0],
+        customer,
+        pickup: $("pickupTime").value.trim(),
+        note: $("orderNote").value.trim(),
+        items: structuredClone(draft),
+        createdAt: new Date().toISOString()
+      };
+    }
+
+    async function submitOrder(push) {
+      try {
+        const order = makeOrder();
+        state.orders.unshift(order);
+        save();
+        if (push) await pushOrder(order);
+        clearOrder(false);
+        init();
+        status("orderStatus", push ? "订单已保存，并已微信通知。" : "订单已保存，未通知。");
+      } catch (err) {
+        status("orderStatus", err.message);
+      }
+    }
+
+    function clearOrder(show = true) {
+      draft = [];
+      $("customer").value = "";
+      $("pickupTime").value = "";
+      $("orderNote").value = "";
+      $("quantity").value = "";
+      $("itemNote").value = "";
+      renderDraft();
+      if (show) status("orderStatus", "已清空当前订单。");
+    }
+
+    function status(id, text) { $(id).textContent = text; }
+
+    async function sendPush(title, content) {
+      const res = await fetch("https://www.pushplus.plus/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: PUSHPLUS_TOKEN, title, content, template: "html", channel: "wechat" })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || (data.code && data.code !== 200)) throw new Error(data.msg || "推送失败");
+      return data;
+    }
+
+    function orderHtml(order) {
+      return `<h2>${esc(order.date)} 预订单</h2>
+        <p><b>录入人：</b>${esc(order.employee)}</p>
+        <p><b>买家：</b>${esc(order.customer)}</p>
+        ${order.pickup ? `<p><b>取货：</b>${esc(order.pickup)}</p>` : ""}
+        <ol>${order.items.map(i => `<li>${esc(itemText(i))}</li>`).join("")}</ol>
+        ${order.note ? `<p><b>备注：</b>${esc(order.note)}</p>` : ""}`;
+    }
+
+    function pushOrder(order) { return sendPush(`${order.date} ${order.customer} 预订单`, orderHtml(order)); }
+
+    async function pushDraft() {
+      try { await pushOrder(makeOrder()); status("orderStatus", "当前内容已微信通知，尚未保存。"); }
+      catch (err) { status("orderStatus", err.message); }
+    }
+
+    function dayOrders() { return state.orders.filter(o => o.date === ($("statsDate").value || today())); }
+    function allDayItems() { return dayOrders().flatMap(o => o.items.map(i => ({ order: o, item: i }))); }
+
+    function numericQty(item) {
+      const n = Number(String(item.qty).replace(/[^\d.]/g, ""));
+      return Number.isFinite(n) && n > 0 ? n : 1;
+    }
+
+    function groupSum(items, keyFn) {
+      const map = new Map();
+      for (const row of items) {
+        const key = keyFn(row);
+        map.set(key, (map.get(key) || 0) + numericQty(row.item || { qty: 1 }));
+      }
+      return [...map.entries()].sort((a,b) => b[1] - a[1]);
+    }
+
+    function renderBars(id, rows) {
+      if (!rows.length) return $(id).innerHTML = `<div class="empty">暂无数据</div>`;
+      const max = Math.max(...rows.map(r => r[1]));
+      $(id).innerHTML = rows.slice(0, 10).map(([name, value]) => `
+        <div class="bar-row">
+          <span title="${esc(name)}">${esc(name)}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.max(6, value / max * 100)}%"></div></div>
+          <b>${value}</b>
+        </div>
+      `).join("");
+    }
+
+    function renderStats() {
+      const orders = dayOrders();
+      const items = allDayItems();
+      $("countOrders").textContent = orders.length;
+      $("countCustomers").textContent = unique(orders.map(o => o.customer)).length;
+      $("countItems").textContent = items.length;
+      $("countEmployees").textContent = unique(orders.map(o => o.employee)).length;
+      renderBars("categoryChart", groupSum(items, r => r.item.category));
+      renderBars("productChart", groupSum(items, r => r.item.product));
+      renderBars("employeeChart", groupSum(items.map(r => ({ item: { qty: 1 }, order: r.order })), r => r.order.employee));
+      const buyers = groupSum(items.map(r => ({ item: { qty: 1 }, order: r.order })), r => r.order.customer);
+      $("buyerCloud").innerHTML = buyers.length ? buyers.map(([b, n]) => `<span class="buyer-pill">${esc(b)} ${n}项</span>`).join("") : `<div class="empty">暂无买家</div>`;
+      renderCustomerTable(orders);
+      renderDetailTable(items);
+    }
+
+    function renderCustomerTable(orders) {
+      if (!orders.length) return $("customerTable").innerHTML = `<div class="empty">暂无订单</div>`;
+      $("customerTable").innerHTML = `<table><thead><tr><th>买家</th><th>录入人</th><th>下单内容</th><th>备注</th></tr></thead><tbody>${
+        orders.map(o => `<tr><td>${esc(o.customer)}</td><td>${esc(o.employee)}</td><td>${o.items.map(i => esc(itemText(i))).join("<br>")}</td><td>${esc([o.pickup, o.note].filter(Boolean).join("；"))}</td></tr>`).join("")
+      }</tbody></table>`;
+    }
+
+    function renderDetailTable(items) {
+      if (!items.length) return $("detailTable").innerHTML = `<div class="empty">暂无明细</div>`;
+      $("detailTable").innerHTML = `<table><thead><tr><th>日期</th><th>录入人</th><th>买家</th><th>类目</th><th>产品</th><th>处理</th><th>数量</th></tr></thead><tbody>${
+        items.map(({order:o,item:i}) => `<tr><td>${esc(o.date)}</td><td>${esc(o.employee)}</td><td>${esc(o.customer)}</td><td>${esc(i.category)}</td><td>${esc(i.product)}</td><td>${esc(itemDetail(i))}</td><td>${esc(qtyText(i))}</td></tr>`).join("")
+      }</tbody></table>`;
+    }
+
+    function statsHtml() {
+      const date = $("statsDate").value || today();
+      const orders = dayOrders();
+      const items = allDayItems();
+      const byProduct = groupSum(items, r => r.item.product).map(([k,v]) => `<li><b>${esc(k)}</b>：${v}</li>`).join("");
+      const byCustomer = orders.map(o => `<li><b>${esc(o.customer)}</b>：${o.items.map(i => esc(itemText(i))).join("；")}</li>`).join("");
+      return `<h2>${esc(date)} 订单统计</h2><p>订单数：${orders.length}，买家数：${unique(orders.map(o => o.customer)).length}，明细数：${items.length}</p><h3>按产品</h3><ul>${byProduct || "<li>暂无</li>"}</ul><h3>按买家</h3><ul>${byCustomer || "<li>暂无</li>"}</ul>`;
+    }
+
+    function renderFilter() {
+      const date = $("filterDate").value;
+      const employee = $("filterEmployee").value;
+      const kw = $("filterKeyword").value.trim().toLowerCase();
+      const rows = state.orders.filter(o => {
+        const text = [o.date, o.employee, o.customer, o.pickup, o.note, ...o.items.map(itemText)].join(" ").toLowerCase();
+        return (!date || o.date === date) && (!employee || o.employee === employee) && (!kw || text.includes(kw));
+      });
+      $("filterResults").innerHTML = rows.length ? rows.map(o => `
+        <div class="item">
+          <strong>${esc(o.date)} ${esc(o.customer)}</strong>
+          <div class="meta">录入人：${esc(o.employee)} ${esc(o.pickup || "")}</div>
+          <div>${o.items.map(i => esc(itemText(i))).join("<br>")}</div>
+          ${o.note ? `<div class="meta">备注：${esc(o.note)}</div>` : ""}
+          <div class="actions"><button class="secondary" onclick="pushSaved('${o.id}')">重新通知</button><button class="danger" onclick="deleteOrder('${o.id}')">删除订单</button></div>
+        </div>
+      `).join("") : `<div class="empty">没有找到订单</div>`;
+    }
+
+    window.pushSaved = async (id) => {
+      const order = state.orders.find(o => o.id === id);
+      if (!order) return;
+      try { await pushOrder(order); alert("已微信通知"); } catch (err) { alert(err.message); }
+    };
+
+    window.deleteOrder = (id) => {
+      if (!confirm("确定删除这条订单？")) return;
+      state.orders = state.orders.filter(o => o.id !== id);
+      save(); init();
+    };
+
+    function renderProductTable() {
+      $("productTable").innerHTML = `<table><thead><tr><th>类目</th><th>产品</th><th>单位</th><th>处理方式</th><th>操作</th></tr></thead><tbody>${
+        state.products.map((p,i) => `<tr class="product-row" data-index="${i}">
+          <td><input value="${esc(p.category)}"></td>
+          <td><input value="${esc(p.name)}"></td>
+          <td><input value="${esc(p.units.join(","))}"></td>
+          <td><input value="${esc(p.options.join(","))}"></td>
+          <td><button class="danger" onclick="removeProduct(${i})">删除</button></td>
+        </tr>`).join("")
+      }</tbody></table>`;
+    }
+
+    function saveProductsFromTable() {
+      state.products = [...document.querySelectorAll(".product-row")].map(row => {
+        const inputs = row.querySelectorAll("input");
+        return { category: inputs[0].value.trim(), name: inputs[1].value.trim(), units: splitList(inputs[2].value), options: splitList(inputs[3].value) };
+      }).filter(p => p.category && p.name);
+      save(); init(); alert("产品修改已保存");
+    }
+
+    window.removeProduct = (i) => { state.products.splice(i, 1); save(); init(); };
+
+    function addProduct() {
+      const p = { category: $("newCategory").value.trim(), name: $("newProduct").value.trim(), units: splitList($("newUnits").value), options: splitList($("newOptions").value) };
+      if (!p.category || !p.name) return alert("请填写类目和产品。");
+      if (!p.units.length) p.units = ["斤"];
+      state.products.push(p); save();
+      $("newCategory").value = ""; $("newProduct").value = ""; $("newUnits").value = ""; $("newOptions").value = "";
+      init();
+    }
+
+    function exportCsv() {
+      const items = allDayItems();
+      const rows = [["日期","录入人","买家","类目","产品","处理","数量","取货","备注"], ...items.map(({order:o,item:i}) => [o.date,o.employee,o.customer,i.category,i.product,itemDetail(i),qtyText(i),o.pickup,o.note])];
+      const csv = rows.map(r => r.map(c => `"${String(c ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+      const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = `肥嘟嘟预订单_${$("statsDate").value || today()}.csv`; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    document.querySelectorAll(".tab").forEach(btn => btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+      btn.classList.add("active"); $(btn.dataset.view).classList.add("active");
+      renderStats(); renderFilter();
+    }));
+
+    $("currentEmployee").addEventListener("change", () => { state.currentEmployee = $("currentEmployee").value; save(); });
+    $("category").addEventListener("change", renderProductSelect);
+    $("product").addEventListener("change", renderProductOptions);
+    $("addItemBtn").addEventListener("click", addItem);
+    $("savePushBtn").addEventListener("click", () => submitOrder(true));
+    $("saveOnlyBtn").addEventListener("click", () => submitOrder(false));
+    $("clearDraftBtn").addEventListener("click", () => clearOrder(true));
+    $("pushDraftBtn").addEventListener("click", pushDraft);
+    $("statsDate").addEventListener("change", renderStats);
+    $("pushStatsBtn").addEventListener("click", async () => { try { await sendPush(`${$("statsDate").value || today()} 订单统计`, statsHtml()); alert("统计已微信通知"); } catch (err) { alert(err.message); } });
+    $("exportCsvBtn").addEventListener("click", exportCsv);
+    $("filterDate").addEventListener("change", renderFilter);
+    $("filterEmployee").addEventListener("change", renderFilter);
+    $("filterKeyword").addEventListener("input", renderFilter);
+    $("resetFilterBtn").addEventListener("click", () => { $("filterDate").value = ""; $("filterEmployee").value = ""; $("filterKeyword").value = ""; renderFilter(); });
+    $("addProductBtn").addEventListener("click", addProduct);
+    $("saveProductsBtn").addEventListener("click", saveProductsFromTable);
+    $("resetProductsBtn").addEventListener("click", () => { if (confirm("恢复默认产品？订单不会删除。")) { state.products = defaultProducts; save(); init(); } });
+
+    init();
+  </script>
+</body>
+</html>
